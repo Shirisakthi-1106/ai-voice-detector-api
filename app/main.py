@@ -1,47 +1,33 @@
-from fastapi import FastAPI, Depends, HTTPException
-from app.schemas import AudioRequest, DetectionResponse
-from app.auth import verify_api_key
-from app.audio_utils import decode_base64_audio_to_wav
-from app.detector import detect_ai_voice
+from fastapi import FastAPI, Header, Form
+import base64
 
-app = FastAPI(
-    title="AI Generated Voice Detection API",
-    version="1.0"
-)
+app = FastAPI()
 
-@app.get("/")
-def health_check():
-    return {
-        "status": "running",
-        "message": "AI Generated Voice Detection API is live"
-    }
-
-@app.post("/detect", response_model=DetectionResponse)
+@app.post("/detect")
 def detect_voice(
-    request: AudioRequest,
-    _: str = Depends(verify_api_key)
+    language: str = Form(...),
+    audio_format: str = Form(...),
+    audio_base64: str = Form(...),
+    x_api_key: str = Header(...)
 ):
-    if request.audio_format.lower() != "mp3":
-        raise HTTPException(
-            status_code=400,
-            detail="Only MP3 audio format is supported"
-        )
+    if x_api_key != "hackathon_secret_key":
+        return {"detail": "Invalid API key"}
 
-    try:
-        wav_path = decode_base64_audio_to_wav(request.audio_base64)
-    except Exception:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid or corrupted audio input"
-        )
+    # decode base64 audio
+    audio_bytes = base64.b64decode(audio_base64)
 
+    # save temp file
+    temp_path = "temp_audio." + audio_format
+    with open(temp_path, "wb") as f:
+        f.write(audio_bytes)
+
+    # run your existing detection logic
     classification, confidence, explanation = detect_ai_voice(
-        wav_path,
-        request.language.lower()
+        temp_path, language
     )
 
-    return DetectionResponse(
-        classification=classification,
-        confidence=confidence,
-        explanation=explanation
-    )
+    return {
+        "classification": classification,
+        "confidence": confidence,
+        "explanation": explanation
+    }
