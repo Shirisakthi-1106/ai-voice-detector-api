@@ -1,0 +1,30 @@
+# Virtual environments
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Test & temp files
+audio.txt
+test.json
+test_ai.json
+test_ai_filled.json
+test_filled.json
+test_human.json
+test_human_filled.json
+
+# Models (Whisper downloads again on Render)
+models/
+
+# Lock files
+requirements.lock.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env vars
+.env
